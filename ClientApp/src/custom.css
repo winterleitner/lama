@@ -12,3 +12,57 @@ code {
   background-color: #1b6ec2;
   border-color: #1861ac;
 }
+
+.center-elem {
+  text-align: center;
+}
+
+.game-card {
+  display: inline-block;
+  height: 150px;
+  width: 120px;
+  margin-top: 10px;
+  text-align: center;
+  align-self: center;
+  padding-top: 38px;
+  border: 4px solid red;
+  border-radius: 5px;
+  font-size: 40px;
+  background: lightgray;
+  max-width: 30%;
+}
+
+.top-card {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hand-card {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.playable {
+  border: 4px solid green;
+}
+
+
+.playable:not(.off-turn):hover {
+  transform: scale(1.02);
+  font-weight: bold;
+  cursor: pointer;
+  background-color: aliceblue;
+}
+
+.btn:disabled {
+  cursor: default;
+}
+
+.off-turn {
+  opacity: 30%;
+}
+
+.fa-refresh:hover {
+  color: red;
+  cursor: pointer;
+}

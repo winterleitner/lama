@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <base href="%PUBLIC_URL%/" />
     <!--
@@ -11,6 +11,8 @@
     -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
@@ -21,6 +23,25 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>lama</title>
+    <script>
+      document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+        // special hack to prevent zoom-to-tabs gesture in safari
+        document.body.style.zoom = 0.99;
+      });
+
+      document.addEventListener('gesturechange', function(e) {
+        e.preventDefault();
+        // special hack to prevent zoom-to-tabs gesture in safari
+        document.body.style.zoom = 0.99;
+      });
+
+      document.addEventListener('gestureend', function(e) {
+        e.preventDefault();
+        // special hack to prevent zoom-to-tabs gesture in safari
+        document.body.style.zoom = 0.99;
+      });
+    </script>
   </head>
   <body>
     <noscript>

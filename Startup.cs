@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -20,7 +21,15 @@ namespace lama
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDistributedMemoryCache();
 
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(5);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+            
             services.AddControllersWithViews();
 
             // In production, the React files will be served from this directory
@@ -49,6 +58,8 @@ namespace lama
             app.UseSpaStaticFiles();
 
             app.UseRouting();
+
+            app.UseSession();
 
             app.UseEndpoints(endpoints =>
             {
