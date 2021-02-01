@@ -117,6 +117,14 @@ export class GamePage extends Component {
                 <button className="btn btn-primary" onClick={this.login}>Einloggen</button>
             </div>
         }
+        if (this.currentGameExists()) {
+            return <div><button className="btn btn-sm btn-primary" onClick={() => this.setState({game: -1})}>zurück</button>
+                <Game
+                game={this.getCurrentGame()}
+                player={this.getCurrentGame().players.filter(p => p.id === this.state.user.id)[0]}
+                update={this.listGames}
+            /></div>
+        }
         return (
             <div className="center-elem">
                 <h1>Lama-Spiel</h1>
@@ -141,13 +149,6 @@ export class GamePage extends Component {
                     )}
                     </tbody>
                 </table>
-
-                {this.currentGameExists() ? 
-                    <Game 
-                    game={this.getCurrentGame()} 
-                    player={this.getCurrentGame().players.filter(p => p.id === this.state.user.id)[0]}
-                    update={this.listGames}
-                    /> : <></>}
 
             </div>
         );

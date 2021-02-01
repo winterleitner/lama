@@ -76,6 +76,24 @@ export const Game = (props) => {
             </h1>
         else return <h1>Spiel {props.game.id}: Warte auf weitere Spieler...</h1>
     }
+    if (props.game.ended) {
+        return <div><h1>Game Over.</h1><div>Winner(s): {props.game.winners.map(w => w.name + "(" + w.points + "Pt.)").join(", ")}</div>
+            <table className="table">
+                <thead>
+                <tr>
+                    <th>Spieler</th>
+                    <th>Punkte</th>
+                </tr>
+                </thead>
+                <tbody>
+                {props.game.players.sort((a,b) => a.points > b.points).map(p => <tr><td>{p.name}</td><td><div className="progress mt-2">
+                    <div className="progress-bar" role="progressbar" style={{width: `${100*p.points/40}%`}} aria-valuenow={p.points} aria-valuemin="0"
+                         aria-valuemax="40">{p.name}: {p.points}
+                    </div>
+                </div></td></tr>)}
+                </tbody>
+            </table></div>
+    }
     return (
     <div>
         <h1>Spiel {props.game.id}, Runde {props.game.round}</h1>
@@ -95,7 +113,8 @@ export const Game = (props) => {
                  aria-valuemax="40">{p.name}: {p.points}
             </div>
         </div></td><td>{p.numberOfCards}</td><td>{props.game.nextTurn != null && props.game.nextTurn.id == p.id ?
-            <span className="badge badge-pill badge-success">Am Zug</span> : ""}</td></tr>)}
+            <span className="badge badge-pill badge-success">Am Zug</span> : ""}{p.hasFolded &&
+            <span className="badge badge-pill badge-danger">Ausgestiegen</span>}</td></tr>)}
             </tbody>
         </table>
         <div>

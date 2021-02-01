@@ -4,6 +4,7 @@ const Players = props => {
     const [players, setPlayers] = useState([])
 
     useEffect(() => {
+        refresh()
         window.setInterval(refresh, 10000)
     }, [])
     const refresh = async () => {

@@ -23,7 +23,8 @@ namespace lama.Controllers
         [HttpGet]
         public IActionResult GetGamesList()
         {
-            return Ok(Games);
+            return Ok(Games.Select(g => new
+                {g.Id, players = g.Players.Select(p => new {p.Id, p.Name}), g.Started, g.Ended}));
         }
         
         [HttpGet]
