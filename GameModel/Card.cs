@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace lama.Model
@@ -17,7 +18,7 @@ namespace lama.Model
         /// <returns></returns>
         public bool CardIsAllowed(int cardId)
         {
-            return cardId == Id || cardId == Next;
+            return CardIsAllowed(new Card(cardId));
         }
         
         /// <summary>
@@ -27,7 +28,7 @@ namespace lama.Model
         /// <returns></returns>
         public bool CardIsAllowed(Card t)
         {
-            return t.Id == Id || t.Id == Next;
+            return Math.Abs(t.Id) == Math.Abs(Id) || Math.Abs(t.Id) == Math.Abs(Next);
         }
 
         public Card(int id)
@@ -35,7 +36,7 @@ namespace lama.Model
             Id = id;
             Name = id == 0 ? "Lama" : id.ToString();
             Points = id == 0 ? 10 : id;
-            Next = id == 6 ? 0 : id + 1;
+            Next = Math.Abs(id) == 6 ? 0 : Math.Abs(id) + 1;
         }
 
     }

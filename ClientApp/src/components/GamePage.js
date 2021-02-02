@@ -26,8 +26,8 @@ export class GamePage extends Component {
         window.setInterval(this.listGames, 10000)
     }
 
-    async createGame() {
-        const resp = await fetch("/games", {
+    async createGame(config) {
+        const resp = await fetch("/games?configuration=" + config, {
             method: "POST"
         })
         if (resp.ok) {
@@ -105,8 +105,21 @@ export class GamePage extends Component {
             <div className="center-elem">
                 <h1>Lama-Spiel</h1>
                 <div>Username: {this.props.user.userName}</div>
-                <h3>Games</h3>
-                <button className="btn btn-primary" onClick={this.createGame}>Create Game</button>
+                <h3>Open Games</h3>
+                <div className="container">
+                    <div className="row">
+                        <div className="col-sm-0 col-md-4"></div>
+                        <div className="col-sm-12 col-md-4">
+                            <button className="btn btn-primary mt-1 btn-block" onClick={() => this.createGame(0)}>Create
+                                Standard Game
+                            </button>
+                            <button className="btn btn-primary mt-1 btn-block" onClick={() => this.createGame(1)}>Create
+                                Advanced Game
+                            </button>
+                        </div>
+                        <div className="col-sm-0 col-md-4"></div>
+                    </div>
+                </div>
                 <table className="table mt-3">
                     <thead>
                     <tr>
@@ -117,7 +130,7 @@ export class GamePage extends Component {
                     </thead>
                     <tbody>
                     {this.state.games.map(g =>
-                        <tr>
+                        <tr key={g.id}>
                             <td>{g.name}</td>
                             <td>{g.ended ? "Beendet" : g.started ? "Gestartet" : this.getPlayersWaitingText(g.players)}</td>
                             <td>{g.started && !this.alreadyInGame(g.id) ? "" :

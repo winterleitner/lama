@@ -8,10 +8,11 @@ namespace lama.Model
 {
     public class Game
     {
-        public Game(int id, string name)
+        public Game(int id, string name, GameConfiguration configuration)
         {
             Id = id;
             Name = name;
+            _configuration = configuration;
             CreateTime = DateTime.UtcNow;
             Started = false;
             Round = 0;
@@ -19,9 +20,15 @@ namespace lama.Model
             Stack = new Stack<Card>();
             Players = new HashSet<Player>();
             Winners = new HashSet<Player>();
+            Messages = new LinkedList<ChatMessage>();
         }
 
+        private GameConfiguration _configuration;
+
+        public LinkedList<ChatMessage> Messages { get; private set; }
+
         public event EventHandler GameEnded;
+        public event EventHandler StatusChanged;
         public int Id { get; set; }
         
         public string Name { get; set; }
@@ -31,6 +38,8 @@ namespace lama.Model
         public bool Started { get; private set; }
 
         public bool Ended { get; private set; }
+        
+        public bool Aborted { get; private set; }
         
         public DateTime LastMoveTime { get; private set; }
         
@@ -109,6 +118,7 @@ namespace lama.Model
             if (p.Cards.Count == 0) EndRound(p);
             // if only one player remains and he cannot play a card -> end game
             if (!DrawingAllowed && !Players.Any(p => !p.HasFolded && p.CanPlayAnyCard(TopCard))) EndRound(null);
+            StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -127,6 +137,7 @@ namespace lama.Model
                 Ended = true;
                 foreach (var p in Players.Where(p => p.Points == Players.Min(p => p.Points)))
                     Winners.Add(p);
+                GameEnded?.Invoke(this, EventArgs.Empty);
             }
             else
             {
@@ -141,6 +152,8 @@ namespace lama.Model
         {
             EndRound(null);
             Ended = true;
+            Aborted = true;
+            GameEnded?.Invoke(this, EventArgs.Empty);
         }
 
         
@@ -154,14 +167,14 @@ namespace lama.Model
             foreach (var p in Players)
             {
                 p.HasFolded = false;
-                for (int i = 0; i <= 6; i++)
+                for (int i = 0; i < _configuration.StartCards; i++)
                 {
                     p.Cards.Add(Stack.Pop());
                 }
             }
             TopCard = Stack.Pop();
             Turns = new();
-            foreach (var p in Players.OrderBy(a => Guid.NewGuid()).ToList())
+            foreach (var p in Players.OrderBy(p => p.Points).ThenBy(p => p.Elo).ToList())
             {
                 Turns.Enqueue(p);
             }
@@ -174,11 +187,22 @@ namespace lama.Model
         {
             Stack = new Stack<Card>();
             var temp = new List<Card>();
-            for (int i = 0; i <= 6; i++)
+            for (int i = 0; i <= _configuration.HighestCard; i++)
             {
-                for (int j = 0; j <= 6; j++)
+                for (int j = 0; j <= _configuration.CardsPerType; j++)
                 {
                     temp.Add(new Card(i));
+                }
+            }
+
+            if (_configuration.UseNegativeCards)
+            {
+                for (int i = 1; i <= _configuration.HighestCard; i++)
+                {
+                    for (int j = 0; j <= _configuration.NegativeCardsPerType; j++)
+                    {
+                        temp.Add(new Card(-i));
+                    }
                 }
             }
             var shuffled = temp.OrderBy(a => Guid.NewGuid()).ToList();
@@ -198,6 +222,13 @@ namespace lama.Model
             if (Players.All(p => p.UserName == user.UserName)) return;
             foreach (var p in Players.Where(p => p.UserName == user.UserName))
                 Players.Remove(p);
+        }
+
+        public ChatMessage AddChatMessage(User u, string m)
+        {
+            var message = new ChatMessage(Id, u, m);
+            Messages.AddLast(message);
+            return message;
         }
     }
 }

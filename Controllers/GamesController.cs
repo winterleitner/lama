@@ -28,7 +28,13 @@ namespace lama.Controllers
 
         private LamaContext _context;
 
-        private static GameNameGenerator NameGen = new GameNameGenerator(); 
+        private static GameNameGenerator NameGen = new GameNameGenerator();
+
+        [NonAction]
+        public static Game? FindGame(int id)
+        {
+            return Games.FirstOrDefault(g => g.Id == id);
+        }
 
         public GamesController(UserManager<User> umg, SignInManager<User> smg, LamaContext context)
         {
@@ -54,10 +60,12 @@ namespace lama.Controllers
 
         [Authorize]
         [HttpPost]
-        public IActionResult CreateGame()
+        public IActionResult CreateGame(int? configuration)
         {
             currentGameIndex++;
-            var g = new Game(currentGameIndex, NameGen.GetRandomName());
+            var config = GameConfiguration.DefaultLama;
+            if (configuration.HasValue && configuration.Value == 1) config = GameConfiguration.NegativeLama;
+            var g = new Game(currentGameIndex, NameGen.GetRandomName(), config);
             Games.Add(g);
             return Ok(g.Id);
         }

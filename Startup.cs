@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using lama.Database;
+using lama.Hubs;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,7 +33,8 @@ namespace lama
             services.AddDbContext<LamaContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            
+            services.AddSignalR();
+
             services.AddIdentity<User, IdentityRole>(options =>
                 {
                     options.Lockout.MaxFailedAccessAttempts = 20;
@@ -40,23 +42,6 @@ namespace lama
                 })
                 .AddEntityFrameworkStores<LamaContext>();
                 
-/*
-            services.AddAuthentication()
-                .AddCookie(x =>
-                {
-                    x.Cookie.Name = "Doge_Session";
-                    x.Cookie.HttpOnly = true;
-                    x.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-                    x.SlidingExpiration = true;
-                    x.Cookie.IsEssential = true;
-                    x.LoginPath = "/login";
-                    x.Events.OnRedirectToLogin = context =>
-                    {
-                        context.Response.StatusCode = 401;
-                        return Task.CompletedTask;
-                    };
-                });
-            */
             services.ConfigureApplicationCookie(options =>
             {
                 options.Events.OnRedirectToLogin = context =>
@@ -100,6 +85,7 @@ namespace lama
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
+                endpoints.MapHub<GameHub>("/game-feed");
             });
 
             app.UseSpa(spa =>

@@ -1,6 +1,21 @@
 import React from "react"
 
 export const GamePlayerTable = props => {
+    if (!props.started)
+        return (
+            <div>
+                <table className="table">
+                    <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Rating</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {props.players.sort((a,b) => a.points > b.points).map(p => <tr><td>{p.userName}</td><td>{p.elo}</td></tr>)}
+                    </tbody>
+                </table></div>
+        )
     if (props.gameover)
         return (
             <div><h1>Game Over.</h1><div>Winner(s): {props.winners.map(w => w.userName + "(" + w.points + "Pt.)").join(", ")}</div>

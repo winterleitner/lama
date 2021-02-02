@@ -38,6 +38,7 @@ namespace lama.Model
         public void Lose()
         {
             Points += Cards.GroupBy(c => c.Id).ToDictionary(g => g.Key, group => group.ToList()).Sum(x => x.Value.First().Points);
+            if (Points < 0) Points = 0;
             Cards = new List<Card>();
         }
 
