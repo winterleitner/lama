@@ -129,6 +129,20 @@ namespace lama.Controllers
             if (player is null) return BadRequest("You are not in that game!");
             return Ok(player.Cards);
         }
+        
+        [Authorize]
+        [HttpGet]
+        [Route("{gameId}/chat")]
+        public async Task<IActionResult> GetChatMessages(int gameId)
+        {
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
+            var game = Games.Find(g => g.Id == gameId);
+            if (game is null) return NotFound("Game not found");
+            var player = game.Players.FirstOrDefault(p => p.UserName == user.UserName);
+            if (player is null) return BadRequest("You are not in that game!");
+            return Ok(game.GetChatMessages());
+        }
 
         [Authorize]
         [HttpPost]

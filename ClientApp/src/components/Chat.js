@@ -5,7 +5,6 @@ export const Chat = props => {
     const [input, setInput] = useState("")
     const [signalRConnection, setSignalRConnection] = useState(null)
     const [messages, setMessages] = useState([])
-    const [tests, setTests] = useState([])
 
     const latestChat = useRef(null);
 
@@ -38,11 +37,22 @@ export const Chat = props => {
     }, [signalRConnection]);
     
     useEffect(() => {
-        const element = document.getElementById(props.game + "-messages");
+        const element = document.getElementById(props.gameId + "-messages");
         if (element != null) {
             element.scrollTop = element.scrollHeight;
         }
     }, [messages])
+    
+    useEffect(() => {
+        loadChat()
+    }, [props.gameId])
+
+    const loadChat = async () => {
+        const resp = await fetch(`/games/${props.gameId}/chat`)
+        if (resp.ok) {
+            setMessages(await resp.json())
+        }
+    }
 
     const sendMessage = (command, ...args) => {
         signalRConnection.invoke(command, ...args)
@@ -65,7 +75,7 @@ export const Chat = props => {
     
     return (
         <div className="chat-container">
-            <div className="messages-container" id={props.game + "-messages"}>
+            <div className="messages-container" id={props.gameId + "-messages"}>
             {messages.map((m, idx) => 
                 <div className="chat-message" id={"m-" + idx} key={"m-" + idx}>
                     <div className="chat-sender">{m.userName}:&nbsp;</div>

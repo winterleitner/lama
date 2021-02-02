@@ -25,7 +25,7 @@ namespace lama.Model
 
         private GameConfiguration _configuration;
 
-        public LinkedList<ChatMessage> Messages { get; private set; }
+        private LinkedList<ChatMessage> Messages { get; set; }
 
         public event EventHandler GameEnded;
         public event EventHandler StatusChanged;
@@ -229,6 +229,11 @@ namespace lama.Model
             var message = new ChatMessage(Id, u, m);
             Messages.AddLast(message);
             return message;
+        }
+
+        public LinkedList<ChatMessage> GetChatMessages()
+        {
+            return Messages;
         }
     }
 }
