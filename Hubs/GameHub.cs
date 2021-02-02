@@ -42,6 +42,12 @@ namespace lama.Hubs
             await base.OnDisconnectedAsync(ex);
         }
 
+        /// <summary>
+        /// SignalR endpoint for sending chat messages.
+        /// </summary>
+        /// <param name="game"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public async Task SendMessage(int game, string message)
         {
             var g = GamesController.FindGame(game);

@@ -18,7 +18,7 @@ namespace lama.Model
             Round = 0;
             Turns = new Queue<Player>();
             Stack = new Stack<Card>();
-            Players = new HashSet<Player>();
+            _players = new HashSet<Player>();
             Winners = new HashSet<Player>();
             Messages = new LinkedList<ChatMessage>();
         }
@@ -45,7 +45,18 @@ namespace lama.Model
         
         public int Round { get; private set; }
         public bool DrawingAllowed => !Ended && Players is not null && (Players.Count(pl => !pl.HasFolded) >= 2);
-        public HashSet<Player> Players { get; set; }
+
+        private HashSet<Player> _players;
+
+        public HashSet<Player> Players
+        {
+            get { return _players.Where(p => !p.HasLeftGame).ToHashSet(); }
+            private set
+            {
+                _players = value;
+            }
+        }
+
         public Queue<Player> Turns { get; set; }
         
         public HashSet<Player> Winners { get; private set; }
@@ -214,14 +225,19 @@ namespace lama.Model
 
         public void AddPlayer(Player p)
         {
-            Players.Add(p);
+            _players.Add(p);
         }
 
         public void RemovePlayer(User user)
         {
+            if (Ended) return;
             if (Players.All(p => p.UserName == user.UserName)) return;
-            foreach (var p in Players.Where(p => p.UserName == user.UserName))
-                Players.Remove(p);
+            foreach (var p in _players.Where(p => p.UserName == user.UserName))
+            {
+                if (Started)
+                    p.HasLeftGame = true;
+                else _players.Remove(p);
+            }
         }
 
         public ChatMessage AddChatMessage(User u, string m)

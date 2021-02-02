@@ -9,7 +9,7 @@ export const Game = (props) => {
         
     useEffect(() => {
         update()
-        let interval = window.setInterval(update, 10000)
+        let interval = window.setInterval(update, 1000)
         return () => {
             clearInterval(interval)
         }

@@ -26,6 +26,8 @@ namespace lama.Model
         public int Points { get; set; }
         
         public bool HasFolded { get; set; }
+        
+        public bool HasLeftGame { get; set; }
 
         public void Win()
         {

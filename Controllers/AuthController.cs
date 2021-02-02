@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace lama.Controllers
 {
@@ -29,8 +30,8 @@ namespace lama.Controllers
         public async Task<IActionResult> GetProfile()
         {
             var user = await _userManager.GetUserAsync(this.User);
-            user.Games = _context.GamePlayers.Where(g => g.Player == user).ToList();
-            return Ok(new {user.UserName, user.Email, user.Elo, user.Games});
+            user.Games = _context.GamePlayers.Include(p => p.Game).Where(g => g.Player == user).ToList();
+            return Ok(new {user.UserName, user.Email, user.Elo, Games = user.Games.Select(g => new {g.Game.Id, g.Rank})});
         }
 
         [HttpGet]

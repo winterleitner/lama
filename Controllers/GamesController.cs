@@ -1,12 +1,19 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IdentityServer4.EntityFramework.Options;
 using lama.Database;
+using lama.Hubs;
 using lama.Model;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 
 namespace lama.Controllers
@@ -28,6 +35,10 @@ namespace lama.Controllers
 
         private LamaContext _context;
 
+        private IHubContext<GameHub> _signalR;
+
+        private static Microsoft.Extensions.Configuration.IConfiguration Configuration;
+
         private static GameNameGenerator NameGen = new GameNameGenerator();
 
         [NonAction]
@@ -36,11 +47,13 @@ namespace lama.Controllers
             return Games.FirstOrDefault(g => g.Id == id);
         }
 
-        public GamesController(UserManager<User> umg, SignInManager<User> smg, LamaContext context)
+        public GamesController(UserManager<User> umg, SignInManager<User> smg, LamaContext context, IHubContext<GameHub> signalRHub, IConfiguration configuration)
         {
             _userManager = umg;
             _signInManager = smg;
             _context = context;
+            _signalR = signalRHub;
+            Configuration = configuration;
         }
         [HttpGet]
         public IActionResult GetGamesList()
@@ -60,15 +73,99 @@ namespace lama.Controllers
 
         [Authorize]
         [HttpPost]
-        public IActionResult CreateGame(int? configuration)
+        public async Task<IActionResult> CreateGame(int? configuration)
         {
-            currentGameIndex++;
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
+
+            var nGame = new StoredGame()
+            {
+                Completed = false,
+                Aborted = false,
+                CreatedBy = user,
+                CreatedTime = DateTime.UtcNow,
+                Name = NameGen.GetRandomName(),
+                Players = new List<StoredGamePlayers>()
+            };
+            _context.Games.Add(nGame);
+            await _context.SaveChangesAsync();
             var config = GameConfiguration.DefaultLama;
             if (configuration.HasValue && configuration.Value == 1) config = GameConfiguration.NegativeLama;
-            var g = new Game(currentGameIndex, NameGen.GetRandomName(), config);
+            
+            var g = new Game(nGame.Id, nGame.Name, config);
             Games.Add(g);
+            g.StatusChanged += GameStatusChanged;
+            g.GameEnded += GameEnded;
             return Ok(g.Id);
         }
+
+        private async void GameStatusChanged(object? sender, EventArgs e)
+        {
+            if (sender is not Game) return;
+            var game = sender as Game;
+            await _signalR.Clients.Users(game.Players.Select(p => p.GetUser().Id).ToList()).SendAsync("OnGameStatusChanged", game.Id);
+        }
+        private async void GameEnded(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is not Game) return;
+                var game = sender as Game;
+                var contextOptions = new DbContextOptionsBuilder<LamaContext>()
+                    .UseNpgsql(Configuration.GetConnectionString("DefaultConnection"))
+                    .Options;
+
+                using var context = new LamaContext(contextOptions, null);
+                
+                var dbGame = context.Games.Find(game.Id);
+                if (dbGame is null) return;
+                dbGame.Completed = true;
+                dbGame.EndedTime = DateTime.UtcNow;
+                var players = game.Players.OrderBy(p => p.Points).Select(p => new StoredGamePlayers()
+                {
+                    Game = dbGame,
+                    Player = p.GetUser(),
+                    PlayerId = p.GetUser().Id,
+                    LeftBeforeEnd = p.HasLeftGame,
+                    Points = p.Points
+                }).ToList();
+                for (int i = 0; i < players.Count; i++)
+                {
+                    players.ElementAt(i).Rank = i + 1;
+                }
+
+                PlayersController.CalculateNewEloRating(players);
+                var ratings = new Dictionary<string, double>();
+                foreach (var p in players)
+                {
+                    ratings.Add(p.PlayerId, p.Player.Elo);
+                    p.Player = null;
+                }
+                dbGame.Players = players;
+                await context.SaveChangesAsync();
+                var users = context.GamePlayers.Include(p => p.Player).Where(e => e.GameId == game.Id).ToList();
+                foreach (var user in users)
+                {
+                    user.Player.Elo = ratings[user.PlayerId];
+                }
+
+                await context.SaveChangesAsync();
+                try
+                {
+                    game.StatusChanged -= GameStatusChanged;
+                }
+                catch
+                {
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+        }
+        
+        
 
         [Authorize]
         [HttpPost]
@@ -173,6 +270,37 @@ namespace lama.Controllers
             }
 
             return BadRequest("Invalid move");
+        }
+
+        [HttpGet]
+        [Route("test")]
+        public IActionResult Test()
+        {
+            var l = new List<StoredGamePlayers>()
+            {
+                new StoredGamePlayers()
+                {
+                    Player = new User() {Elo = 1200, UserName = "First"},
+                    Rank = 1
+                },
+                new StoredGamePlayers()
+                {
+                    Player = new User() {Elo = 1300, UserName = "Second"},
+                    Rank = 2
+                },
+                new StoredGamePlayers()
+                {
+                    Player = new User() {Elo = 1300, UserName = "Third"},
+                    Rank = 3
+                },
+                new StoredGamePlayers()
+                {
+                    Player = new User() {Elo = 1100, UserName = "Last"},
+                    Rank = 4
+                }
+            };
+            PlayersController.CalculateNewEloRating(l);
+            return Ok(l);
         }
     }
 }

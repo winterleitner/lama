@@ -15,6 +15,8 @@ namespace lama.Database
         
         public int Rank { get; set; }
         
-        public string Points { get; set; }
+        public int Points { get; set; }
+        
+        public double EloChange { get; set; }
     }
 }
