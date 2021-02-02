@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using lama.Database;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,15 @@ namespace lama.Controllers
             var user = await _userManager.GetUserAsync(this.User);
             user.Games = _context.GamePlayers.Where(g => g.Player == user).ToList();
             return Ok(new {user.UserName, user.Email, user.Elo, user.Games});
+        }
+
+        [HttpGet]
+        [Route("{userName}")]
+        public async Task<IActionResult> GetUserProfile(string userName)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user is null) return NotFound();
+            return Ok(new {user.Elo, user.Games, user.UserName});
         }
 
         [HttpPost]

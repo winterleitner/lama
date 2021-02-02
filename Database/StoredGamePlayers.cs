@@ -11,6 +11,8 @@ namespace lama.Database
         public int GameId { get; set; }
         public virtual StoredGame Game { get; set; }
         
+        public bool LeftBeforeEnd { get; set; }
+        
         public int Rank { get; set; }
         
         public string Points { get; set; }

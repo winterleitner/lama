@@ -2,14 +2,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using lama.Database;
 
 namespace lama.Model
 {
     public class Game
     {
-        public Game(int id)
+        public Game(int id, string name)
         {
             Id = id;
+            Name = name;
             CreateTime = DateTime.UtcNow;
             Started = false;
             Round = 0;
@@ -18,7 +20,11 @@ namespace lama.Model
             Players = new HashSet<Player>();
             Winners = new HashSet<Player>();
         }
+
+        public event EventHandler GameEnded;
         public int Id { get; set; }
+        
+        public string Name { get; set; }
         
         public DateTime CreateTime { get; private set; }
         public DateTime StartTime { get; private set; }
@@ -187,10 +193,10 @@ namespace lama.Model
             Players.Add(p);
         }
 
-        public void RemovePlayer(int id)
+        public void RemovePlayer(User user)
         {
-            if (Players.All(p => p.Id != id)) return;
-            foreach (var p in Players.Where(p => p.Id == id))
+            if (Players.All(p => p.UserName == user.UserName)) return;
+            foreach (var p in Players.Where(p => p.UserName == user.UserName))
                 Players.Remove(p);
         }
     }

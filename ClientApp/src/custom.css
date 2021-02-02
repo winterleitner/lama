@@ -62,7 +62,24 @@ code {
   opacity: 30%;
 }
 
+.off-turn > * {
+  pointer-events: none;
+}
+
 .fa-refresh:hover {
   color: red;
   cursor: pointer;
+}
+
+.blurred {
+  filter: blur(1px);
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+}
+
+.blurred > * {
+  pointer-events: none;
 }

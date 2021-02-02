@@ -1,5 +1,9 @@
 using System;
+using System.Linq;
+using lama.Database;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace lama.Controllers
 {
@@ -7,21 +11,34 @@ namespace lama.Controllers
     [Route("[controller]")]
     public class PlayersController : ControllerBase
     {
-        public PlayersController()
+        private UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+
+        private LamaContext _context;
+
+        public PlayersController(UserManager<User> umg, SignInManager<User> smg, LamaContext context)
         {
-            
+            _userManager = umg;
+            _signInManager = smg;
+            _context = context;
         }
 
         [HttpGet]
-        public IActionResult GetEloResult()
+        public IActionResult GetPlayersList()
         {
-            // Ra and Rb are current ELO ratings 
+            var users = _userManager.Users
+                .Include(u => u.Games)
+                .Select(u => new {u.UserName, u.Elo, games = u.Games.Count})
+                .OrderByDescending(o => o.Elo)
+                .ToList();
+            return Ok(users);
+            /*// Ra and Rb are current ELO ratings 
             float Ra = 1200, Rb = 1000; 
            
             int K = 30; 
             bool d = false; 
             var res = EloRating(Ra, Rb, K, d); 
-            return Ok(res);
+            return Ok(res);*/
         }
         
         private double Probability(double rating1,  

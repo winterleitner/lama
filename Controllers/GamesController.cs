@@ -1,7 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using lama.Database;
 using lama.Model;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -13,18 +17,30 @@ namespace lama.Controllers
     {
         private static readonly List<Game> Games = new List<Game>();
         private static int currentGameIndex = 0;
-        private static int currentUserIndex = 0;
 
         private static readonly string USERID = "UserId";
         private static readonly string USERNAME = "UserName";
 
         private static readonly HashSet<string> Users = new HashSet<string>();
+        
+        private UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
 
+        private LamaContext _context;
+
+        private static GameNameGenerator NameGen = new GameNameGenerator(); 
+
+        public GamesController(UserManager<User> umg, SignInManager<User> smg, LamaContext context)
+        {
+            _userManager = umg;
+            _signInManager = smg;
+            _context = context;
+        }
         [HttpGet]
         public IActionResult GetGamesList()
         {
             return Ok(Games.Select(g => new
-                {g.Id, players = g.Players.Select(p => new {p.Id, p.Name}), g.Started, g.Ended}));
+                {g.Id, g.Name, players = g.Players.Select(p => new {p.UserName, p.Elo}), g.Started, g.Ended}));
         }
         
         [HttpGet]
@@ -36,98 +52,90 @@ namespace lama.Controllers
             return Ok(game);
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult CreateGame()
         {
             currentGameIndex++;
-            var g = new Game(currentGameIndex);
+            var g = new Game(currentGameIndex, NameGen.GetRandomName());
             Games.Add(g);
             return Ok(g.Id);
         }
 
-        [HttpPost]
-        [Route("/join")]
-        public IActionResult JoinServer([FromBody] string name)
-        {
-            var id = currentUserIndex++;
-            HttpContext.Session.SetInt32(USERID, id);
-            HttpContext.Session.SetString(USERNAME, name);
-            Users.Add(name);
-            return Ok(new {id, name});
-        }
-
+        [Authorize]
         [HttpPost]
         [Route("{gameId}/join")]
-        public IActionResult JoinGame(int gameId)
+        public async Task<IActionResult> JoinGame(int gameId)
         {
-            var user = HttpContext.Session.GetInt32(USERID);
-            var name = HttpContext.Session.GetString(USERNAME);
-            if (user is null || name is null) return BadRequest("Please join server first");
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
             var game = Games.Find(g => g.Id == gameId);
             if (game is null) return NotFound("Game not found");
-            if (game.Players.Any(p => p.Id == user.Value)) return BadRequest("Already joined that game");
+            if (game.Players.Any(p => p.UserName == user.UserName)) return BadRequest("Already joined that game");
             if (game.Started) return BadRequest("Game already started");
-            game.AddPlayer(new Player(user.Value, name));
+            game.AddPlayer(new Player(user));
             return Ok();
         }
         
+        [Authorize]
         [HttpPost]
         [Route("{gameId}/leave")]
-        public IActionResult LeaveGame(int gameId)
+        public async Task<IActionResult> LeaveGame(int gameId)
         {
-            var user = HttpContext.Session.GetInt32(USERID);
-            var name = HttpContext.Session.GetString(USERNAME);
-            if (user is null || name is null) return BadRequest("Please join server first");
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
             var game = Games.Find(g => g.Id == gameId);
             if (game is null) return NotFound("Game not found");
             if (game.Started) return BadRequest("Cannot leave already started game");
-            game.RemovePlayer(user.Value);
+            game.RemovePlayer(user);
             return Ok();
         }
 
+        [Authorize]
         [HttpPost]
         [Route("{gameId}/start")]
-        public IActionResult StartGame(int gameId)
+        public async Task<IActionResult> StartGame(int gameId)
         {
-            var user = HttpContext.Session.GetInt32(USERID);
-            var name = HttpContext.Session.GetString(USERNAME);
-            if (user is null || name is null) return BadRequest("Please join server first");
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
             var game = Games.Find(g => g.Id == gameId);
             if (game is null) return NotFound("Game not found");
+            if (game.Started) return BadRequest("Game already started");
+            if (game.Players.All(p => p.UserName != user.UserName)) return BadRequest("Cannot start game without joining");
             if (game.Players.Count < 2) return BadRequest("Not enough players");
             if (game.StartGame()) return Ok();
             return StatusCode(500);
         }
 
+        [Authorize]
         [HttpGet]
         [Route("{gameId}/cards")]
-        public IActionResult GetHandCards(int gameId)
+        public async Task<IActionResult> GetHandCards(int gameId)
         {
-            var user = HttpContext.Session.GetInt32(USERID);
-            var name = HttpContext.Session.GetString(USERNAME);
-            if (user is null || name is null) return BadRequest("Please join server first");
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
             var game = Games.Find(g => g.Id == gameId);
             if (game is null) return NotFound("Game not found");
             if (!game.Started) return BadRequest("Game not started");
-            var player = game.Players.FirstOrDefault(p => p.Id == user.Value);
+            var player = game.Players.FirstOrDefault(p => p.UserName == user.UserName);
             if (player is null) return BadRequest("You are not in that game!");
             return Ok(player.Cards);
         }
 
+        [Authorize]
         [HttpPost]
         [Route("{gameId}/move")]
-        public IActionResult Move(int gameId, [FromBody] Move move)
+        public async Task<IActionResult> Move(int gameId, [FromBody] Move move)
         {
-            var user = HttpContext.Session.GetInt32(USERID);
-            var name = HttpContext.Session.GetString(USERNAME);
-            if (user is null || name is null) return BadRequest("Please join server first");
+            var user = await _userManager.GetUserAsync(this.User);
+            if (user is null) return BadRequest("Please join server first");
             var game = Games.Find(g => g.Id == gameId);
             if (game is null) return NotFound("Game not found");
             if (!game.Started) return BadRequest("Game not started");
             if (move is null) return BadRequest("Bad Move");
-            var player = game.Players.FirstOrDefault(p => p.Id == user.Value);
+            var player = game.Players.FirstOrDefault(p => p.UserName == user.UserName);
             if (player is null) return BadRequest("You are not in that game!");
-            if (game.NextTurn is null || game.NextTurn.Id != user.Value) return BadRequest("Not your turn");
+            if (game.NextTurn is null || game.NextTurn.UserName != user.UserName) return BadRequest("Not your turn");
             switch (move.Type)
             {
                 case MoveType.Fold: game.Fold(player); return Ok();
@@ -143,23 +151,6 @@ namespace lama.Controllers
             }
 
             return BadRequest("Invalid move");
-        }
-
-        [HttpGet]
-        [Route("/user")]
-        public IActionResult GetUser()
-        {
-            var user = HttpContext.Session.GetInt32(USERID);
-            var name = HttpContext.Session.GetString(USERNAME);
-            if (user is null || name is null) return BadRequest("Please join server first");
-            return Ok(new {id = user.Value, name = name});
-        }
-
-        [HttpGet]
-        [Route("/users")]
-        public IActionResult ListUsers()
-        {
-            return Ok(Users);
         }
     }
 }

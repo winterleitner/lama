@@ -1,19 +1,18 @@
 import React, {Component} from 'react';
 import {Game} from "./Game";
+import {Login} from "./Login";
 
 export class GamePage extends Component {
 
     state = {
         games: [],
         game: -1,
-        user: {id: -1, name: ""},
-        userNameText: "",
-        createdGame: -1
+        createdGame: -1,
+        loading: true
     }
 
     constructor(props) {
         super(props);
-        this.login = this.login.bind(this);
         this.listGames = this.listGames.bind(this);
         this.createGame = this.createGame.bind(this);
         this.joinGame = this.joinGame.bind(this);
@@ -23,25 +22,8 @@ export class GamePage extends Component {
     }
 
     componentDidMount() {
-        fetch("/user").then(res => {
-            if (res.ok) {
-                res.json().then(json => this.setState({user: json}))
-            }
-        })
         this.listGames()
-        window.setInterval(this.listGames, 1000)
-    }
-
-    async login() {
-        const resp = await fetch("/join", {
-            method: "POST",
-            body: `"${this.state.userNameText}"`,
-            headers: {'Content-Type': "application/json"}
-        })
-        if (resp.ok) {
-            const user = await resp.json();
-            this.setState({user: user});
-        }
+        window.setInterval(this.listGames, 10000)
     }
 
     async createGame() {
@@ -68,11 +50,10 @@ export class GamePage extends Component {
     async joinGame(id) {
         if (this.state.games.filter(g => g.id === id).length === 0) return
         const game = this.state.games.filter(g => g.id === id)[0]
-        if (game.players.some(p => p.id === this.state.user.id)) {
+        if (game.players.some(p => p.userName === this.props.user.userName)) {
             // show game
             this.setState({game: id})
-        }
-        else {
+        } else {
             //join game
             const resp = await fetch(`/games/${id}/join`, {
                 method: "POST"
@@ -80,61 +61,56 @@ export class GamePage extends Component {
             if (resp.ok) {
                 this.setState({game: id})
                 await this.listGames();
-            }
-            else {
+            } else {
                 alert(await resp.text())
             }
         }
     }
-    
+
     alreadyInGame(id) {
         if (this.state.games.filter(g => g.id === id).length === 0) return false
         const game = this.state.games.filter(g => g.id === id)[0]
-        return game.players.some(p => p.id === this.state.user.id)
+        return game.players.some(p => p.userName === this.props.user.userName)
     }
-    
+
     currentGameExists() {
-        return this.state.games.filter(g => g.id === this.state.game).length > 0 && this.getCurrentGame().players.some(p => p.id === this.state.user.id);
+        return this.state.games.filter(g => g.id === this.state.game).length > 0 && this.getCurrentGame().players.some(p => p.userName === this.props.user.userName);
     }
-    
+
     getCurrentGame() {
         return this.state.games.filter(g => g.id === this.state.game)[0];
     }
-    
+
     getPlayersWaitingText(players) {
         if (players.length === 0) return "Noch keine Spieler."
         if (players.length === 1) return "1 Spieler wartet..."
         return `${players.length} Spieler warten...`
     }
-    
+
 
     render() {
-        console.log(this.state.user)
-        let userComp;
-        if (this.state.user.id === -1) {
-            return <div className="mb-3 center-elem"><input type="text" placeholder="Spielername" className="form-control" value={this.state.userNameText}
-                                   onChange={e => this.setState({userNameText: e.target.value})}/><br/>
-                <button className="btn btn-primary" onClick={this.login}>Einloggen</button>
-            </div>
+        if (this.props.user.userName.length === 0) {
+            return <Login success={this.props.onLogin}/>
         }
         if (this.currentGameExists()) {
-            return <div><button className="btn btn-sm btn-primary" onClick={() => this.setState({game: -1})}>zurück</button>
+            return <div>
+                <button className="btn btn-sm btn-primary" onClick={() => this.setState({game: -1})}>zurück</button>
                 <Game
-                game={this.getCurrentGame()}
-                player={this.getCurrentGame().players.filter(p => p.id === this.state.user.id)[0]}
-                update={this.listGames}
-            /></div>
+                    game={this.state.game}
+                    player={this.props.user.userName}
+                    update={this.listGames}
+                /></div>
         }
         return (
             <div className="center-elem">
                 <h1>Lama-Spiel</h1>
-                <div>Username: {this.state.user.name}</div>
+                <div>Username: {this.props.user.userName}</div>
                 <h3>Games</h3>
-                <button className="btn btn-primary" onClick={this.createGame}>Spiel erstellen</button>
+                <button className="btn btn-primary" onClick={this.createGame}>Create Game</button>
                 <table className="table mt-3">
                     <thead>
                     <tr>
-                        <th>Id</th>
+                        <th>Name</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -142,9 +118,11 @@ export class GamePage extends Component {
                     <tbody>
                     {this.state.games.map(g =>
                         <tr>
-                            <td>{g.id}</td>
+                            <td>{g.name}</td>
                             <td>{g.ended ? "Beendet" : g.started ? "Gestartet" : this.getPlayersWaitingText(g.players)}</td>
-                            <td>{g.started && !this.alreadyInGame(g.id) ? "" : <button className="btn btn-sm btn-success" onClick={() => this.joinGame(g.id)}>{this.alreadyInGame(g.id) ? "Anzeigen" : "Beitreten"}</button>}</td>
+                            <td>{g.started && !this.alreadyInGame(g.id) ? "" :
+                                <button className="btn btn-sm btn-success"
+                                        onClick={() => this.joinGame(g.id)}>{this.alreadyInGame(g.id) ? "Anzeigen" : "Beitreten"}</button>}</td>
                         </tr>
                     )}
                     </tbody>

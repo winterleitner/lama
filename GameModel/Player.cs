@@ -1,20 +1,25 @@
 using System.Collections.Generic;
 using System.Linq;
+using lama.Database;
 using Microsoft.AspNetCore.Routing.Matching;
 
 namespace lama.Model
 {
     public class Player
     {
-        public Player(int id, string name)
+        public Player(User user)
         {
-            Id = id;
-            Name = name;
+            _user = user;
             Cards = new List<Card>();
             HasFolded = false;
         }
-        public int Id { get; set; }
-        public string Name { get; set; }
+
+        private User _user;
+
+        public string UserName => _user.UserName;
+
+        public double Elo => _user.Elo;
+        
         internal List<Card> Cards { get; set; }
 
         public int NumberOfCards => Cards.Count;
@@ -44,6 +49,11 @@ namespace lama.Model
         public bool CanPlayAnyCard(Card topCard)
         {
             return Cards.Any(topCard.CardIsAllowed);
+        }
+
+        public User GetUser()
+        {
+            return _user;
         }
     }
 }
