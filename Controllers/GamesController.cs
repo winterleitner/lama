@@ -139,6 +139,8 @@ namespace lama.Controllers
                 foreach (var p in players)
                 {
                     ratings.Add(p.PlayerId, p.Player.Elo);
+                    var gp = game.Players.FirstOrDefault(x => x.UserName == p.Player.UserName);
+                    if (gp != null) gp.EloChange = p.EloChange;
                     p.Player = null;
                 }
                 dbGame.Players = players;

@@ -24,14 +24,15 @@ export const GamePlayerTable = props => {
                     <tr>
                         <th>Player</th>
                         <th>Points</th>
+                        <th>Elo-Difference</th>
                     </tr>
                     </thead>
                     <tbody>
                     {props.players.sort((a,b) => a.points > b.points).map(p => <tr><td>{p.userName} ({p.elo})</td><td><div className="progress mt-2">
                         <div className="progress-bar" role="progressbar" style={{width: `${100*p.points/40}%`}} aria-valuenow={p.points} aria-valuemin="0"
-                             aria-valuemax="40">{p.name}: {p.points}
+                             aria-valuemax="40">{p.points}
                         </div>
-                    </div></td></tr>)}
+                    </div></td><td>{Math.round(p.eloChange)}</td></tr>)}
                     </tbody>
                 </table></div>
         )
@@ -49,7 +50,7 @@ export const GamePlayerTable = props => {
         <tbody>
         {props.players.map(p => <tr><td>{p.userName} ({p.elo})</td><td><div className="progress mt-2">
             <div className="progress-bar" role="progressbar" style={{width: `${100*p.points/40}%`}} aria-valuenow={p.points} aria-valuemin="0"
-                 aria-valuemax="40">{p.name}: {p.points}
+                 aria-valuemax="40">{p.points}
             </div>
         </div></td><td>{p.numberOfCards}</td><td>{props.nextTurn != null && props.nextTurn.userName == p.userName ?
             <span className="badge badge-pill badge-success">{p.userName}'s turn</span> : ""}{p.hasFolded &&

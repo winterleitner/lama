@@ -81,6 +81,7 @@ namespace lama.Model
             Started = true;
             StartTime = DateTime.UtcNow;
             InitRound();
+            StatusChanged?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
@@ -226,6 +227,7 @@ namespace lama.Model
         public void AddPlayer(Player p)
         {
             _players.Add(p);
+            StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public void RemovePlayer(User user)
@@ -238,6 +240,7 @@ namespace lama.Model
                     p.HasLeftGame = true;
                 else _players.Remove(p);
             }
+            StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public ChatMessage AddChatMessage(User u, string m)

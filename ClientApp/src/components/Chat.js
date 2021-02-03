@@ -31,6 +31,12 @@ export const Chat = props => {
                             addMessage(message)
                         }
                     });
+                    signalRConnection.on("OnGameStatusChanged", function (gameId) {
+                        if (gameId === props.gameId) {
+                            props.update()
+                        }
+                    });
+                    
                 })
                 .catch(e => console.log('Connection failed: ', e));
         }

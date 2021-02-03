@@ -20,6 +20,8 @@ namespace lama.Model
 
         public double Elo => _user.Elo;
         
+        public double EloChange { get; set; }
+
         internal List<Card> Cards { get; set; }
 
         public int NumberOfCards => Cards.Count;

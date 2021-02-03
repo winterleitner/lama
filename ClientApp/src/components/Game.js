@@ -9,15 +9,11 @@ export const Game = (props) => {
         
     useEffect(() => {
         update()
-        let interval = window.setInterval(update, 1000)
-        return () => {
-            clearInterval(interval)
-        }
     }, [props.game])
 
     const update = async () => {
-        loadGame();
-        loadCards()
+        await loadCards()
+        await loadGame()
     }
     const loadGame = async () => {
         const resp = await fetch(`/games/${props.game}`, {
@@ -73,7 +69,6 @@ export const Game = (props) => {
     }
 
     const loadCards = async () => {
-        if (game == null || !game.started || game.ended) return
         const resp = await fetch(`/games/${props.game}/cards`)
         if (resp.ok) {
             setCards(await resp.json())
@@ -94,30 +89,31 @@ export const Game = (props) => {
     if (!game.started) {
         if (gameCanBeStarted())
             return <>
-                <h1>{game.id}
+                <h1>{game.name}
                     <button className="btn btn-sm btn-success" onClick={startGame}>Start</button>
                 </h1>
-                <Chat gameId={props.game}/>
+                <Chat gameId={props.game} update={update}/>
                 <GamePlayerTable players={game.players} winners={game.winners} gameover={true}
                                  nextTurn={game.nextTurn}/>
             </>
         else return <>
             <h1>{game.name}: Waiting for more Players...</h1>
-            <Chat gameId={props.game}/>
+            <Chat gameId={props.game} update={update}/>
             <GamePlayerTable players={game.players} winners={game.winners} gameover={true}
                              nextTurn={game.nextTurn} started={game.started}/>
         </>
     }
     if (game.ended) {
         return <GamePlayerTable players={game.players} winners={game.winners} gameover={game.ended}
-                                nextTurn={game.nextTurn}/>
+                                nextTurn={game.nextTurn} started={game.started}/>
 
     }
     return (
         <div>
             <h1>{game.name}: Round {game.round}</h1>
+            <Chat gameId={props.game} update={update}/>
             <GamePlayerTable players={game.players} winners={game.winners} gameover={game.ended}
-                             nextTurn={game.nextTurn}/>
+                             nextTurn={game.nextTurn} started={game.started}/>
             <div>
                 <div className="center-elem"><h4>Top Card:</h4>
                     <div className="game-card top-card"> {game.topCard.name}</div>

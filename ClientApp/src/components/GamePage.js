@@ -8,7 +8,8 @@ export class GamePage extends Component {
         games: [],
         game: -1,
         createdGame: -1,
-        loading: true
+        loading: true,
+        intervalId: -1
     }
 
     constructor(props) {
@@ -23,7 +24,9 @@ export class GamePage extends Component {
 
     componentDidMount() {
         this.listGames()
-        window.setInterval(this.listGames, 10000)
+        window.clearInterval(this.state.intervalId)
+        const nIntervalId = window.setInterval(this.listGames, 5000)
+        this.setState({intervalId: nIntervalId})
     }
 
     async createGame(config) {
@@ -98,7 +101,6 @@ export class GamePage extends Component {
                 <Game
                     game={this.state.game}
                     player={this.props.user.userName}
-                    update={this.listGames}
                 /></div>
         }
         return (
@@ -125,7 +127,8 @@ export class GamePage extends Component {
                     <tr>
                         <th>Name</th>
                         <th>Status</th>
-                        <th></th>
+                        <th><button className="btn btn-sm btn-secondary" onClick={this.listGames}>Refresh</button>
+                        </th>
                     </tr>
                     </thead>
                     <tbody>
