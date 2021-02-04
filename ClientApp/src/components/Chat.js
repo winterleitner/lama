@@ -5,6 +5,8 @@ export const Chat = props => {
     const [input, setInput] = useState("")
     const [signalRConnection, setSignalRConnection] = useState(null)
     const [messages, setMessages] = useState([])
+    const [newMessages, setNewMessages] = useState(0)
+    const [minimized, setMinimized] = useState(false)
 
     const latestChat = useRef(null);
 
@@ -16,7 +18,7 @@ export const Chat = props => {
             .withAutomaticReconnect()
             .configureLogging(LogLevel.Information)
             .build();
-        
+
         setSignalRConnection(newConn)
     }, [])
 
@@ -36,19 +38,22 @@ export const Chat = props => {
                             props.update()
                         }
                     });
-                    
+
                 })
                 .catch(e => console.log('Connection failed: ', e));
         }
     }, [signalRConnection]);
-    
+
     useEffect(() => {
-        const element = document.getElementById(props.gameId + "-messages");
+        const element = document.getElementById(`chat-panel-body-${props.gameId}`);
         if (element != null) {
             element.scrollTop = element.scrollHeight;
         }
+        if (minimized) {
+            setNewMessages(newMessages + 1)
+        }
     }, [messages])
-    
+
     useEffect(() => {
         loadChat()
     }, [props.gameId])
@@ -78,20 +83,71 @@ export const Chat = props => {
         sendMessage("SendMessage", props.gameId, input)
         setInput("")
     }
-    
+
+    const minimizeChat = (e) => {
+        e.preventDefault()
+        const panel = document.getElementById(`chat-${props.gameId}`)
+        const body = document.getElementById(`chat-panel-body-${props.gameId}`)
+        const footer = document.getElementById(`chat-panel-footer-${props.gameId}`)
+        if(panel.classList.contains('mini'))
+        {            
+            setMinimized(false)
+            setNewMessages(0)
+            panel.classList.remove('mini')
+            panel.classList.add('normal');
+
+            body.animate({height: "250px"}, 500)
+            body.style.display = 'block';
+
+            footer.animate({height: "75px"}, 500)
+            footer.style.display = 'block';
+        }
+        else
+        {
+            setMinimized(true)
+            panel.classList.remove('normal')
+            panel.classList.add('mini');
+
+            body.animate({height: "0"}, 500);
+
+            footer.animate({height: "0"}, 500);
+
+            setTimeout(function() {
+                body.style.display = 'none';
+                footer.style.display = 'none';
+            }, 500);
+
+
+        }
+    }
+
     return (
-        <div className="chat-container">
-            <div className="messages-container" id={props.gameId + "-messages"}>
-            {messages.map((m, idx) => 
-                <div className="chat-message" id={"m-" + idx} key={"m-" + idx}>
-                    <div className="chat-sender">{m.userName}:&nbsp;</div>
-                    <div className="chat-text">{m.message}</div>
+        <div className="container">
+            <div className="row">
+                <div className="panel panel-chat" id={`chat-${props.gameId}`}>
+                    <div className="panel-heading">
+                        <a href="#" className="chatMinimize" onClick={minimizeChat}><span>Chat <span className="new-message-counter">{newMessages > 0 ? newMessages : ""}</span></span></a>
+                        <div className="clearFix"></div>
+                    </div>
+                    <div className="panel-body" id={`chat-panel-body-${props.gameId}`}>
+                            {messages.map((m, idx) =>
+                                <div className="chat-message" id={"m-" + idx} key={"m-" + idx}>
+                                    <div className="chat-sender">{m.userName}:&nbsp;</div>
+                                    <div className="chat-text">{m.message}</div>
+                                </div>
+                            )}
+                        </div>
+                    <div className="panel-footer" id={`chat-panel-footer-${props.gameId}`}>
+                        <div className="send-container">
+                            <input type="text" className="chat-textinput form-control" value={input}
+                                   onChange={e => setInput(e.target.value)} onKeyDown={e => {
+                                if (e.key === 'Enter') send()
+                            }}/>
+                            <button className="chat-send" onClick={send}><i className="fa fa-paper-plane"
+                                                                            aria-hidden="true"></i></button>
+                        </div>
+                    </div>
                 </div>
-            )}
-            </div>
-            <div className="send-container">
-                <input type="text" className="chat-textinput form-control" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => {if (e.key === 'Enter') send()}}/>
-                <button className="chat-send" onClick={send}><i className="fa fa-paper-plane" aria-hidden="true"></i></button>
             </div>
         </div>
     )

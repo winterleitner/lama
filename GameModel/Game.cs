@@ -254,5 +254,12 @@ namespace lama.Model
         {
             return Messages;
         }
+
+        public bool IsValidCardId(int id)
+        {
+            var highest = _configuration.HighestCard;
+            var lowest = _configuration.UseNegativeCards ? -highest : 0;
+            return id >= lowest && id <= highest; 
+        }
     }
 }

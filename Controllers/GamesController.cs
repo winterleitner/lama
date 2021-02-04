@@ -264,7 +264,7 @@ namespace lama.Controllers
                         if (card is null) return BadRequest("Could not draw card");
                         return Ok(card);
                 case MoveType.PlayCard:
-                    if (move.CardId < 0 || move.CardId > 6) return BadRequest("Invalid card specified");
+                    if (!game.IsValidCardId(move.CardId)) return BadRequest("Invalid card specified");
                     if (player.Cards.All(c => c.Id != move.CardId)) return BadRequest("You do not have this card");
                     if (!game.TopCard.CardIsAllowed(new Card(move.CardId))) return BadRequest("Card cannot be played");
                     if (game.PlayCard(player, move.CardId)) return Ok();
