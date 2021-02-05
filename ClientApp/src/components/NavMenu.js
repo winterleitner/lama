@@ -42,7 +42,7 @@ export class NavMenu extends Component {
           <>
             <NavItem>
               <NavbarText className="text-dark">
-                {this.props.user.userName} ({this.props.user.elo})
+                {this.props.user.userName} ({Math.round(this.props.user.elo)})
               </NavbarText>
             </NavItem>
           <NavItem>

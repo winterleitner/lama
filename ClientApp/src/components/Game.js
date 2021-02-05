@@ -7,7 +7,7 @@ export const Game = (props) => {
 
     const [game, setGame] = useState(null)
     const [cards, setCards] = useState([])
-        
+
     useEffect(() => {
         update()
     }, [props.game])
@@ -52,7 +52,7 @@ export const Game = (props) => {
         const move = {type: 0}
         await submitMove(move)
     }
-    
+
     const onTimeExpired = () => {
         if (!isPlayersTurn()) return
         const g = game
@@ -100,13 +100,13 @@ export const Game = (props) => {
                 <h2>{game.name}
                     <button className="btn btn-sm btn-success" onClick={startGame}>Start</button>
                 </h2>
-                <Chat gameId={props.game} update={update} connection={props.signalR}/>
+                <Chat gameId={props.game} update={update} connection={props.connection} userName={props.player}/>
                 <GamePlayerTable players={game.players} winners={game.winners} gameover={true}
                                  nextTurn={game.nextTurn}/>
             </>
         else return <>
             <h2>{game.name}: Waiting for more Players...</h2>
-            <Chat gameId={props.game} update={update} connection={props.signalR}/>
+            <Chat gameId={props.game} update={update} connection={props.connection} userName={props.player}/>
             <GamePlayerTable players={game.players} winners={game.winners} gameover={true}
                              nextTurn={game.nextTurn} started={game.started}/>
         </>
@@ -119,28 +119,32 @@ export const Game = (props) => {
     return (
         <div>
             <h2>{game.name}: Round {game.round}</h2>
-            <Chat gameId={props.game} update={update} connection={props.signalR}/>
+            <Chat gameId={props.game} update={update} connection={props.connection} userName={props.player}/>
             <GamePlayerTable players={game.players} winners={game.winners} gameover={game.ended}
                              nextTurn={game.nextTurn} started={game.started}/>
             <div>
                 <div className="center-elem"><h4>Top Card:</h4>
                     <div className="game-card top-card"> {game.topCard.name}</div>
                 </div>
-                <h4 className="mt-4">Turn: {game.nextTurn != null && game.nextTurn.userName} <GameTimer enabled={game.configuration.useTimeLimit} maxTime={game.configuration.timePerMove} currentTime={game.remainingMoveTime} turn={game.nextTurn} onExpired={onTimeExpired}/></h4>
+                <h4 className="mt-4">Turn: {game.nextTurn != null && game.nextTurn.userName} <GameTimer
+                    enabled={game.configuration.useTimeLimit} maxTime={game.configuration.timePerMove}
+                    currentTime={game.remainingMoveTime} turn={game.nextTurn} onExpired={onTimeExpired}/></h4>
 
                 <h4>Hand ({cards.length}) <i className="fa fa-refresh fa-spin" style={{fontSize: "24px"}}
                                              onClick={loadCards}></i>
-                    <button className="btn btn-sm btn-primary ml-2" disabled={!isPlayersTurn()} onClick={drawCard}>Draw Card
+                    <button className="btn btn-sm btn-primary ml-2" disabled={!isPlayersTurn()} onClick={drawCard}>Draw
+                        Card
                     </button>
                     <button className="btn btn-sm btn-danger ml-2" disabled={!isPlayersTurn()} onClick={fold}>Fold
                     </button>
                 </h4>
-
-                {cards
-                    .sort((a, b) => a.id > b.id)
-                    .map(c => <div
-                        className={"game-card hand-card" + (cardCanBePlayed(c.id) ? " playable" : "") + (isPlayersTurn() ? "" : " off-turn")}
-                        onClick={() => playCard(c.id)}>{c.name}</div>)}
+                <div className="hand-card-container">
+                    {cards
+                        .sort((a, b) => a.id > b.id)
+                        .map(c => <div
+                            className={"game-card hand-card" + (cardCanBePlayed(c.id) ? " playable" : "") + (isPlayersTurn() ? "" : " off-turn") + (c.id === 0 ? " doge-card" : "")}
+                            onClick={() => playCard(c.id)}>{c.name}</div>)}
+                </div>
             </div>
         </div>
     )

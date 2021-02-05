@@ -32,9 +32,19 @@ code {
   max-width: 30%;
 }
 
+.doge-card {
+  background-image: url("/doge.jpg");
+  background-size: cover;
+  color: transparent;
+}
+
 .top-card {
   margin-left: auto;
   margin-right: auto;
+}
+
+.hand-card-container {
+  margin-bottom: 30px;
 }
 
 .hand-card {
@@ -59,7 +69,7 @@ code {
 }
 
 .off-turn {
-  opacity: 30%;
+  opacity: 0.3;
 }
 
 .off-turn > * {

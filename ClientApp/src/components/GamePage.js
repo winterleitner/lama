@@ -1,7 +1,6 @@
 import React, {Component, useEffect} from 'react';
 import {Game} from "./Game";
 import {Login} from "./Login";
-import {HubConnectionBuilder, LogLevel} from "@microsoft/signalr";
 
 export class GamePage extends Component {
 
@@ -10,8 +9,7 @@ export class GamePage extends Component {
         game: -1,
         createdGame: -1,
         loading: true,
-        intervalId: -1,
-        signalRConnection: null
+        intervalId: -1
     }
 
     constructor(props) {
@@ -29,14 +27,7 @@ export class GamePage extends Component {
         window.clearInterval(this.state.intervalId)
         const nIntervalId = window.setInterval(this.listGames, 5000)
 
-        const newConn = new HubConnectionBuilder()
-            .withUrl("/game-feed")
-            .withAutomaticReconnect()
-            .configureLogging(LogLevel.Information)
-            .build();
-        if (newConn) newConn.start()
-
-        this.setState({intervalId: nIntervalId, signalRConnection: newConn, loading: false})
+        this.setState({intervalId: nIntervalId, loading: false})
     }
 
     async createGame(config) {
@@ -112,12 +103,12 @@ export class GamePage extends Component {
                 <Game
                     game={this.state.game}
                     player={this.props.user.userName}
-                    signalR={this.state.signalRConnection}
+                    connection={this.props.connection}
                 /></div>
         }
         return (
             <div className="center-elem">
-                <h1>Lama-Game</h1>
+                <h1>Doge-Game</h1>
                 <div>Username: {this.props.user.userName}</div>
                 <h3>Open Games</h3>
                 <div className="container">
@@ -126,9 +117,6 @@ export class GamePage extends Component {
                         <div className="col-sm-12 col-md-4">
                             <button className="btn btn-primary mt-1 btn-block" onClick={() => this.createGame(0)}>Create
                                 Standard Game
-                            </button>
-                            <button className="btn btn-primary mt-1 btn-block" onClick={() => this.createGame(1)}>Create
-                                Advanced Game
                             </button>
                         </div>
                         <div className="col-sm-0 col-md-4"></div>

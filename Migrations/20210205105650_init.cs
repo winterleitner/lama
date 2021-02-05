@@ -133,8 +133,8 @@ namespace lama.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    ProviderKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
                     UserId = table.Column<string>(type: "text", nullable: false)
                 },
@@ -178,8 +178,8 @@ namespace lama.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -204,6 +204,7 @@ namespace lama.Migrations
                     CreatedTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     EndedTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Completed = table.Column<bool>(type: "boolean", nullable: false),
+                    Aborted = table.Column<bool>(type: "boolean", nullable: false),
                     WinnerId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -229,8 +230,10 @@ namespace lama.Migrations
                 {
                     PlayerId = table.Column<string>(type: "text", nullable: false),
                     GameId = table.Column<int>(type: "integer", nullable: false),
+                    LeftBeforeEnd = table.Column<bool>(type: "boolean", nullable: false),
                     Rank = table.Column<int>(type: "integer", nullable: false),
-                    Points = table.Column<string>(type: "text", nullable: true)
+                    Points = table.Column<int>(type: "integer", nullable: false),
+                    EloChange = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {

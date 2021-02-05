@@ -34,7 +34,7 @@ namespace lama.Model
         public Card(int id)
         {
             Id = id;
-            Name = id == 0 ? "Lama" : id.ToString();
+            Name = id == 0 ? "Doge" : id.ToString();
             Points = id == 0 ? 10 : id;
             Next = Math.Abs(id) == 6 ? 0 : Math.Abs(id) + 1;
         }

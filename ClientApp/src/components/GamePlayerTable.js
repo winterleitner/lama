@@ -12,7 +12,7 @@ export const GamePlayerTable = props => {
                     </tr>
                     </thead>
                     <tbody>
-                    {props.players.sort((a,b) => a.points > b.points).map(p => <tr><td>{p.userName}</td><td>{p.elo}</td></tr>)}
+                    {props.players.sort((a,b) => a.points > b.points).map(p => <tr><td>{p.userName}</td><td>{Math.round(p.elo)}</td></tr>)}
                     </tbody>
                 </table></div>
         )

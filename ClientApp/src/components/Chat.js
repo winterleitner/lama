@@ -6,6 +6,7 @@ export const Chat = props => {
     const [messages, setMessages] = useState([])
     const [newMessages, setNewMessages] = useState(0)
     const [minimized, setMinimized] = useState(false)
+    const [firstLoad, setFirstLoad] = useState(true)
 
     const latestChat = useRef(null);
 
@@ -16,6 +17,10 @@ export const Chat = props => {
             props.connection.on("OnNewChatMessage", function (message) {
                 if (message.gameId === props.gameId) {
                     addMessage(message)
+                    if (message.userName !== props.userName) {
+                        const audio = new Audio("chat.wav");
+                        audio.play();
+                    }
                 }
             });
             props.connection.on("OnGameStatusChanged", function (gameId) {
@@ -28,8 +33,9 @@ export const Chat = props => {
 
     useEffect(() => {
         if (minimized) {
-            if (messages.length > 0)
+            if (messages.length > 0 && !firstLoad)
                 setNewMessages(newMessages + 1)
+            setFirstLoad(false)
         } else scrollDown()
     }, [messages])
 
