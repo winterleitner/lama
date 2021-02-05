@@ -25,7 +25,7 @@ code {
   text-align: center;
   align-self: center;
   padding-top: 38px;
-  border: 4px solid red;
+  border: 4px solid black;
   border-radius: 5px;
   font-size: 40px;
   background: lightgray;
@@ -54,6 +54,10 @@ code {
 
 .playable {
   border: 4px solid green;
+}
+
+.non-playable {
+  border: 4px solid black;
 }
 
 

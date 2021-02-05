@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from "react"
+import {HomeAd} from "./Ads/HomeAd";
 
 export const Login = props => {
     const [loading, setLoading] = useState(false)
@@ -71,6 +72,7 @@ export const Login = props => {
     return (
         <div>
             <h1>Please Log in Or Register</h1>
+            <HomeAd/>
             <div className={"container" + (loading ? " blurred" : "")}>
                 <div className="row">
                     <div className="col-md-12 col-lg-6">

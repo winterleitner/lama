@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react"
+import {HomeAd} from "./Ads/HomeAd";
 
 const Players = props => {
     const [players, setPlayers] = useState([])
@@ -16,6 +17,7 @@ const Players = props => {
     return (
         <div>
             <h1>{players.length} Players in Leaderboard</h1>
+            <HomeAd/>
             <table className="table">
                 <thead>
                 <tr>

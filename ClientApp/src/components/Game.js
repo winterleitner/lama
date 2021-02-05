@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react"
 import {GamePlayerTable} from "./GamePlayerTable";
 import {Chat} from "./Chat";
 import {GameTimer} from "./GameTimer";
+import {HomeAd} from "./Ads/HomeAd";
 
 export const Game = (props) => {
 
@@ -124,7 +125,7 @@ export const Game = (props) => {
                              nextTurn={game.nextTurn} started={game.started}/>
             <div>
                 <div className="center-elem"><h4>Top Card:</h4>
-                    <div className="game-card top-card"> {game.topCard.name}</div>
+                    <div className={"game-card top-card" + (game.topCard.id === 0 ? " doge-card" : "")}> {game.topCard.name}</div>
                 </div>
                 <h4 className="mt-4">Turn: {game.nextTurn != null && game.nextTurn.userName} <GameTimer
                     enabled={game.configuration.useTimeLimit} maxTime={game.configuration.timePerMove}
@@ -142,9 +143,10 @@ export const Game = (props) => {
                     {cards
                         .sort((a, b) => a.id > b.id)
                         .map(c => <div
-                            className={"game-card hand-card" + (cardCanBePlayed(c.id) ? " playable" : "") + (isPlayersTurn() ? "" : " off-turn") + (c.id === 0 ? " doge-card" : "")}
+                            className={"game-card hand-card" + (cardCanBePlayed(c.id) ? " playable" : "non-playable") + (isPlayersTurn() ? "" : " off-turn") + (c.id === 0 ? " doge-card" : "")}
                             onClick={() => playCard(c.id)}>{c.name}</div>)}
                 </div>
+                <HomeAd/>
             </div>
         </div>
     )
