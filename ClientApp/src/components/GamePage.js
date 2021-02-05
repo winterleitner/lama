@@ -1,6 +1,7 @@
-import React, {Component} from 'react';
+import React, {Component, useEffect} from 'react';
 import {Game} from "./Game";
 import {Login} from "./Login";
+import {HubConnectionBuilder, LogLevel} from "@microsoft/signalr";
 
 export class GamePage extends Component {
 
@@ -9,7 +10,8 @@ export class GamePage extends Component {
         game: -1,
         createdGame: -1,
         loading: true,
-        intervalId: -1
+        intervalId: -1,
+        signalRConnection: null
     }
 
     constructor(props) {
@@ -26,7 +28,15 @@ export class GamePage extends Component {
         this.listGames()
         window.clearInterval(this.state.intervalId)
         const nIntervalId = window.setInterval(this.listGames, 5000)
-        this.setState({intervalId: nIntervalId})
+
+        const newConn = new HubConnectionBuilder()
+            .withUrl("/game-feed")
+            .withAutomaticReconnect()
+            .configureLogging(LogLevel.Information)
+            .build();
+        if (newConn) newConn.start()
+
+        this.setState({intervalId: nIntervalId, signalRConnection: newConn, loading: false})
     }
 
     async createGame(config) {
@@ -85,9 +95,9 @@ export class GamePage extends Component {
     }
 
     getPlayersWaitingText(players) {
-        if (players.length === 0) return "Noch keine Spieler."
-        if (players.length === 1) return "1 Spieler wartet..."
-        return `${players.length} Spieler warten...`
+        if (players.length === 0) return "No Players yet."
+        if (players.length === 1) return "1 Player waiting..."
+        return `${players.length} Players waiting...`
     }
 
 
@@ -95,17 +105,19 @@ export class GamePage extends Component {
         if (this.props.user.userName.length === 0) {
             return <Login success={this.props.onLogin}/>
         }
+        if (this.state.loading) return <h1>Loading...</h1>
         if (this.currentGameExists()) {
             return <div>
                 <button className="btn btn-sm btn-primary" onClick={() => this.setState({game: -1})}>zurück</button>
                 <Game
                     game={this.state.game}
                     player={this.props.user.userName}
+                    signalR={this.state.signalRConnection}
                 /></div>
         }
         return (
             <div className="center-elem">
-                <h1>Lama-Spiel</h1>
+                <h1>Lama-Game</h1>
                 <div>Username: {this.props.user.userName}</div>
                 <h3>Open Games</h3>
                 <div className="container">
@@ -127,18 +139,23 @@ export class GamePage extends Component {
                     <tr>
                         <th>Name</th>
                         <th>Status</th>
-                        <th><button className="btn btn-sm btn-secondary" onClick={this.listGames}>Refresh</button>
+                        <th>
+                            <button className="btn btn-sm btn-secondary" onClick={this.listGames}>Refresh</button>
                         </th>
                     </tr>
                     </thead>
                     <tbody>
-                    {this.state.games.map(g =>
+                    {this.state.games.sort((a, b) => a.id < b.id).map(g =>
                         <tr key={g.id}>
                             <td>{g.name}</td>
-                            <td>{g.ended ? "Beendet" : g.started ? "Gestartet" : this.getPlayersWaitingText(g.players)}</td>
-                            <td>{g.started && !this.alreadyInGame(g.id) ? "" :
-                                <button className="btn btn-sm btn-success"
-                                        onClick={() => this.joinGame(g.id)}>{this.alreadyInGame(g.id) ? "Anzeigen" : "Beitreten"}</button>}</td>
+                            <td>{g.ended ? "Ended" : g.started ? "Started" : this.getPlayersWaitingText(g.players)}</td>
+                            <td>{g.started && !this.alreadyInGame(g.id) ? "" : this.alreadyInGame(g.id) ? (g.ended ?
+                                <button className="btn btn-sm btn-danger"
+                                        onClick={() => this.joinGame(g.id)}>Show Results</button> :
+                                <button className="btn btn-sm btn-primary"
+                                        onClick={() => this.joinGame(g.id)}>Enter Room</button>)
+                                : <button className="btn btn-sm btn-success"
+                                          onClick={() => this.joinGame(g.id)}>Join</button>}</td>
                         </tr>
                     )}
                     </tbody>

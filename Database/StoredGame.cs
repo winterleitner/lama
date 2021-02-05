@@ -16,6 +16,8 @@ namespace lama.Database
         public DateTime EndedTime { get; set; }
         public bool Completed { get; set; }
         public bool Aborted { get; set; }
+        
+        public string? WinnerId { get; set; }
         public virtual User? Winner { get; set; }
         
         public virtual ICollection<StoredGamePlayers> Players { get; set; }

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {GamePlayerTable} from "./GamePlayerTable";
 import {Chat} from "./Chat";
+import {GameTimer} from "./GameTimer";
 
 export const Game = (props) => {
 
@@ -51,6 +52,13 @@ export const Game = (props) => {
         const move = {type: 0}
         await submitMove(move)
     }
+    
+    const onTimeExpired = () => {
+        if (!isPlayersTurn()) return
+        const g = game
+        g.nextTurn = null
+        setGame(g)
+    }
 
 
     const submitMove = async (move) => {
@@ -89,16 +97,16 @@ export const Game = (props) => {
     if (!game.started) {
         if (gameCanBeStarted())
             return <>
-                <h1>{game.name}
+                <h2>{game.name}
                     <button className="btn btn-sm btn-success" onClick={startGame}>Start</button>
-                </h1>
-                <Chat gameId={props.game} update={update}/>
+                </h2>
+                <Chat gameId={props.game} update={update} connection={props.signalR}/>
                 <GamePlayerTable players={game.players} winners={game.winners} gameover={true}
                                  nextTurn={game.nextTurn}/>
             </>
         else return <>
-            <h1>{game.name}: Waiting for more Players...</h1>
-            <Chat gameId={props.game} update={update}/>
+            <h2>{game.name}: Waiting for more Players...</h2>
+            <Chat gameId={props.game} update={update} connection={props.signalR}/>
             <GamePlayerTable players={game.players} winners={game.winners} gameover={true}
                              nextTurn={game.nextTurn} started={game.started}/>
         </>
@@ -110,18 +118,19 @@ export const Game = (props) => {
     }
     return (
         <div>
-            <h1>{game.name}: Round {game.round}</h1>
-            <Chat gameId={props.game} update={update}/>
+            <h2>{game.name}: Round {game.round}</h2>
+            <Chat gameId={props.game} update={update} connection={props.signalR}/>
             <GamePlayerTable players={game.players} winners={game.winners} gameover={game.ended}
                              nextTurn={game.nextTurn} started={game.started}/>
             <div>
                 <div className="center-elem"><h4>Top Card:</h4>
                     <div className="game-card top-card"> {game.topCard.name}</div>
                 </div>
-                <h4>An der Reihe: {game.nextTurn != null && game.nextTurn.userName}</h4>
+                <h4 className="mt-4">Turn: {game.nextTurn != null && game.nextTurn.userName} <GameTimer enabled={game.configuration.useTimeLimit} maxTime={game.configuration.timePerMove} currentTime={game.remainingMoveTime} turn={game.nextTurn} onExpired={onTimeExpired}/></h4>
+
                 <h4>Hand ({cards.length}) <i className="fa fa-refresh fa-spin" style={{fontSize: "24px"}}
                                              onClick={loadCards}></i>
-                    <button className="btn btn-sm btn-primary" disabled={!isPlayersTurn()} onClick={drawCard}>Draw Card
+                    <button className="btn btn-sm btn-primary ml-2" disabled={!isPlayersTurn()} onClick={drawCard}>Draw Card
                     </button>
                     <button className="btn btn-sm btn-danger ml-2" disabled={!isPlayersTurn()} onClick={fold}>Fold
                     </button>

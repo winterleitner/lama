@@ -12,7 +12,7 @@ namespace lama.Model
         {
             Id = id;
             Name = name;
-            _configuration = configuration;
+            Configuration = configuration;
             CreateTime = DateTime.UtcNow;
             Started = false;
             Round = 0;
@@ -21,9 +21,20 @@ namespace lama.Model
             _players = new HashSet<Player>();
             Winners = new HashSet<Player>();
             Messages = new LinkedList<ChatMessage>();
+            _timer = new MoveTimer(Configuration.TimePerMove);
+            _timer.Elapsed += (sender, player) =>
+            {
+                if (Configuration.UseTimeLimit)
+                {
+                    if (player == Turns.Peek())
+                        Fold(player);
+                }
+            };
         }
 
-        private GameConfiguration _configuration;
+        private MoveTimer _timer;
+
+        public GameConfiguration Configuration { get; set; }
 
         private LinkedList<ChatMessage> Messages { get; set; }
 
@@ -42,6 +53,11 @@ namespace lama.Model
         public bool Aborted { get; private set; }
         
         public DateTime LastMoveTime { get; private set; }
+
+        /// <summary>
+        /// The Remaining time for the current move (- 1 grace second)
+        /// </summary>
+        public int RemainingMoveTime => _timer.RemainingTime - 1;
         
         public int Round { get; private set; }
         public bool DrawingAllowed => !Ended && Players is not null && (Players.Count(pl => !pl.HasFolded) >= 2);
@@ -81,8 +97,16 @@ namespace lama.Model
             Started = true;
             StartTime = DateTime.UtcNow;
             InitRound();
+            ResetMoveTimer();
             StatusChanged?.Invoke(this, EventArgs.Empty);
             return true;
+        }
+
+        private void ResetMoveTimer()
+        {
+            if (!Configuration.UseTimeLimit) return;
+            var player = Turns.Peek();
+            _timer.Reset(player);
         }
 
         public bool TryStartTurn(Player p)
@@ -130,6 +154,7 @@ namespace lama.Model
             if (p.Cards.Count == 0) EndRound(p);
             // if only one player remains and he cannot play a card -> end game
             if (!DrawingAllowed && !Players.Any(p => !p.HasFolded && p.CanPlayAnyCard(TopCard))) EndRound(null);
+            ResetMoveTimer();
             StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -165,6 +190,7 @@ namespace lama.Model
             EndRound(null);
             Ended = true;
             Aborted = true;
+            StatusChanged?.Invoke(this, EventArgs.Empty);
             GameEnded?.Invoke(this, EventArgs.Empty);
         }
 
@@ -179,7 +205,7 @@ namespace lama.Model
             foreach (var p in Players)
             {
                 p.HasFolded = false;
-                for (int i = 0; i < _configuration.StartCards; i++)
+                for (int i = 0; i < Configuration.StartCards; i++)
                 {
                     p.Cards.Add(Stack.Pop());
                 }
@@ -199,19 +225,19 @@ namespace lama.Model
         {
             Stack = new Stack<Card>();
             var temp = new List<Card>();
-            for (int i = 0; i <= _configuration.HighestCard; i++)
+            for (int i = 0; i <= Configuration.HighestCard; i++)
             {
-                for (int j = 0; j <= _configuration.CardsPerType; j++)
+                for (int j = 0; j <= Configuration.CardsPerType; j++)
                 {
                     temp.Add(new Card(i));
                 }
             }
 
-            if (_configuration.UseNegativeCards)
+            if (Configuration.UseNegativeCards)
             {
-                for (int i = 1; i <= _configuration.HighestCard; i++)
+                for (int i = 1; i <= Configuration.HighestCard; i++)
                 {
-                    for (int j = 0; j <= _configuration.NegativeCardsPerType; j++)
+                    for (int j = 0; j <= Configuration.NegativeCardsPerType; j++)
                     {
                         temp.Add(new Card(-i));
                     }
@@ -257,9 +283,9 @@ namespace lama.Model
 
         public bool IsValidCardId(int id)
         {
-            var highest = _configuration.HighestCard;
-            var lowest = _configuration.UseNegativeCards ? -highest : 0;
-            return id >= lowest && id <= highest; 
+            var highest = Configuration.HighestCard;
+            var lowest = Configuration.UseNegativeCards ? -highest : 0;
+            return id >= lowest && id <= highest;
         }
     }
 }

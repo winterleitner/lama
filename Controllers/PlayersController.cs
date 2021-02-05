@@ -29,7 +29,8 @@ namespace lama.Controllers
         {
             var users = _userManager.Users
                 .Include(u => u.Games)
-                .Select(u => new {u.UserName, u.Elo, games = u.Games.Count})
+                .ThenInclude(g => g.Game)
+                .Select(u => new {u.UserName, u.Elo, games = u.Games.Count, wins = u.Games.Count(g => g.Game.WinnerId == u.Id)})
                 .OrderByDescending(o => o.Elo)
                 .ToList();
             return Ok(users);

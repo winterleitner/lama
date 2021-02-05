@@ -10,8 +10,8 @@ using lama.Database;
 namespace lama.Migrations
 {
     [DbContext(typeof(LamaContext))]
-    [Migration("20210202222315_v2")]
-    partial class v2
+    [Migration("20210205105650_init")]
+    partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

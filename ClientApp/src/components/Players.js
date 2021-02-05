@@ -23,6 +23,7 @@ const Players = props => {
                     <td>Name</td>
                     <td>Rating</td>
                     <td>Games Played</td>
+                    <td>Wins</td>
                 </tr>
                 </thead>
                 <tbody>
@@ -31,6 +32,7 @@ const Players = props => {
                     <td>{p.userName}</td>
                     <td>{p.elo}</td>
                     <td>{p.games}</td>
+                    <td>{p.wins}</td>
                 </tr>)}
                 </tbody>
             </table>

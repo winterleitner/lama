@@ -105,6 +105,12 @@ namespace lama.Controllers
             var game = sender as Game;
             await _signalR.Clients.Users(game.Players.Select(p => p.GetUser().Id).ToList()).SendAsync("OnGameStatusChanged", game.Id);
         }
+        private async void GameTimerChanged(object? sender, EventArgs e)
+        {
+            if (sender is not Game) return;
+            var game = sender as Game;
+            await _signalR.Clients.Users(game.Players.Select(p => p.GetUser().Id).ToList()).SendAsync("OnGameTimerChanged", game.Id);
+        }
         private async void GameEnded(object? sender, EventArgs e)
         {
             try
@@ -121,7 +127,10 @@ namespace lama.Controllers
                 if (dbGame is null) return;
                 dbGame.Completed = true;
                 dbGame.EndedTime = DateTime.UtcNow;
-                var players = game.Players.OrderBy(p => p.Points).Select(p => new StoredGamePlayers()
+                var winner = game.Players.OrderBy(p => p.Points).ThenBy(p => p.Elo).FirstOrDefault();
+                if (winner is not null)
+                    dbGame.WinnerId = winner.GetUser().Id;
+                var players = game.Players.OrderBy(p => p.Points).ThenBy(p => p.Elo).Select(p => new StoredGamePlayers()
                 {
                     Game = dbGame,
                     Player = p.GetUser(),

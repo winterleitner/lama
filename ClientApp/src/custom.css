@@ -118,14 +118,16 @@ code {
 .panel.panel-chat
 {
   position: fixed;
+  z-index: 999;
   bottom:0;
   right:0;
   max-width: 350px;
   box-shadow: none;
   -webkit-box-shadow: none;
 }
-.panel.panel-chat *
+.panel.panel-chat > *
 {
+  z-index: 999;
   background: none;
   border: none;
 }
@@ -168,9 +170,21 @@ code {
   margin: 0;
   border: 1px solid #b2b2b2;
   max-height: 75px;
+  background-color: white;
 }
 
 .new-message-counter {
   color: darkorange;
   font-weight: bolder;
+}
+
+.game-timer {
+  display: inline;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+.dangerous {
+  color: red;
+  background-color: yellow;
 }
