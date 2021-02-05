@@ -143,7 +143,7 @@ export const Game = (props) => {
                     {cards
                         .sort((a, b) => a.id > b.id)
                         .map(c => <div
-                            className={"game-card hand-card" + (cardCanBePlayed(c.id) ? " playable" : "non-playable") + (isPlayersTurn() ? "" : " off-turn") + (c.id === 0 ? " doge-card" : "")}
+                            className={"game-card hand-card" + (cardCanBePlayed(c.id) ? " playable" : " non-playable") + (isPlayersTurn() ? "" : " off-turn") + (c.id === 0 ? " doge-card" : "")}
                             onClick={() => playCard(c.id)}>{c.name}</div>)}
                 </div>
                 <HomeAd/>
